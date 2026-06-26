@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// 1. Definiamo i ruoli in modo chiaro ed esplicito
 interface UserRoles {
   moderator?: boolean;
   vip?: boolean;
@@ -9,7 +8,6 @@ interface UserRoles {
   ordinary?: boolean;
 }
 
-// 2. Interfaccia rigida per i Messaggi della Chat
 interface ChatMessage {
   id: string;
   displayName: string;
@@ -48,7 +46,6 @@ export default function OverlayChat({ channelConfig }: { channelConfig: ChannelC
     if (!channelConfig?.chat_abilitata) return;
 
     const interval = setInterval(() => {
-      // Array di template tipizzato correttamente per TypeScript
       const utentiTest: Omit<ChatMessage, 'id'>[] = [
         { displayName: 'StreamerVip', roles: { vip: true, subscriber: true }, text: 'Ciao chat! Come va? Kappa', badges: { vip: '1', sub: '12' } },
         { displayName: 'ModSuper', roles: { moderator: true }, text: 'Ragazzi mantenete il rispetto in chat PogChamp', badges: { mod: '1' } },
@@ -59,7 +56,6 @@ export default function OverlayChat({ channelConfig }: { channelConfig: ChannelC
 
       const utenteScelto = utentiTest[Math.floor(Math.random() * utentiTest.length)];
       
-      // Costruiamo l'oggetto forzando il tipo ChatMessage in modo nativo
       const msgCasuale: ChatMessage = {
         id: Math.random().toString(),
         displayName: utenteScelto.displayName,

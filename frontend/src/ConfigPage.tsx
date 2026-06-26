@@ -1,119 +1,91 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState } from 'react';
 
-// Definizione delle interfacce per la sicurezza dei tipi di dati in TypeScript
-interface ChatMessage {
-  id: string;
-  displayName: string;
-  text: string;
-  roles: {
-    moderator?: boolean;
-    vip?: boolean;
-    subscriber?: boolean;
-    ordinary?: boolean;
-  };
-  badges: Record<string, string>;
+interface ConfigPageProps {
+  channelId: string;
+  backendUrl: string;
+  token: string;
 }
 
-interface ChannelConfig {
-  chat_abilitata: boolean;
-  durata_messaggio_secondi: number;
-  nascondi_bot: boolean;
-}
+export default function ConfigPage({ channelId, backendUrl, token }: ConfigPageProps) {
+  const [config, setConfig] = useState({
+    chat_abilitata: true,
+    mostra_emotes: true,
+    durata_messaggio_secondi: 8,
+    nascondi_bot: true
+  });
+  const [loading, setLoading] = useState(false);
 
-const BANNED_BOTS = ['nightbot', 'streamelements', 'moobot', 'wizebot'];
-
-export default function OverlayChat({ channelConfig }: { channelConfig: ChannelConfig }) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const maxMessages = 8;
-
-  const getContainerBorder = (roles: ChatMessage['roles']) => {
-    if (roles.moderator) return 'border-green-500';
-    if (roles.vip) return 'border-purple-600';
-    if (roles.subscriber) return 'border-blue-500';
-    return 'border-black';
-  };
-
-  const getNickBoxBg = (roles: ChatMessage['roles']) => {
-    if (roles.moderator) return 'bg-green-950/80 text-green-300';
-    if (roles.vip) return 'bg-purple-950/80 text-purple-300';
-    if (roles.subscriber) return 'bg-blue-950/80 text-blue-300';
-    return 'bg-zinc-800 text-zinc-300';
-  };
-
-  useEffect(() => {
-    if (!channelConfig?.chat_abilitata) return;
-
-    const interval = setInterval(() => {
-      const utentiTest = [
-        { displayName: 'StreamerVip', roles: { vip: true, subscriber: true }, text: 'Ciao chat! Come va? Kappa', badges: { vip: '1', sub: '12' } },
-        { displayName: 'ModSuper', roles: { moderator: true }, text: 'Ragazzi mantenete il rispetto in chat PogChamp', badges: { mod: '1' } },
-        { displayName: 'AbbonatoFedele', roles: { subscriber: true }, text: 'Super minigioco! Partecipo! LUL', badges: { sub: '6' } },
-        { displayName: 'Visitatore99', roles: { ordinary: true }, text: 'Bellissima questa estensione grafica!', badges: {} },
-        { displayName: 'Nightbot', roles: { ordinary: true }, text: 'Seguite lo streamer sui social!', badges: {} }
-      ];
-
-      const utenteScelto = utentiTest[Math.floor(Math.random() * utentiTest.length)];
-      
-      const msgCasuale: ChatMessage = {
-        id: Math.random().toString(),
-        ...utenteScelto
-      };
-
-      if (channelConfig.nascondi_bot && BANNED_BOTS.includes(msgCasuale.displayName.toLowerCase())) {
-        return; 
-      }
-
-      setMessages((prev) => {
-        const nuovaLista = [...prev, msgCasuale];
-        if (nuovaLista.length > maxMessages) {
-          nuovaLista.shift();
-        }
-        return nuovaLista;
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      await fetch(`${backendUrl}/api/config/${channelId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(config)
       });
-
-      setTimeout(() => {
-        setMessages((prev) => prev.filter((m) => m.id !== msgCasuale.id));
-      }, (channelConfig.durata_messaggio_secondi || 8) * 1000);
-
-    }, 2500);
-
-    return () => clearInterval(interval);
-  }, [channelConfig]);
+      alert('Impostazioni salvate su Redis con successo!');
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="w-96 h-[600px] bg-transparent flex flex-col justify-end p-4 pointer-events-none select-none font-sans">
-      <div className="flex flex-col gap-3 justify-end items-start overflow-hidden w-full">
-        <AnimatePresence initial={false}>
-          {messages.map((msg) => (
-            <motion.div
-              key={msg.id}
-              initial={{ opacity: 0, y: 30, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, x: -50, transition: { duration: 0.2 } }}
-              layout
-              className={`w-full p-2.5 rounded-xl bg-zinc-900/90 backdrop-blur-md border-2 ${getContainerBorder(msg.roles)} shadow-2xl flex flex-col gap-2 pointer-events-auto`}
-            >
-              <div className={`px-2 py-1 rounded-md flex items-center justify-between font-bold text-xs ${getNickBoxBg(msg.roles)}`}>
-                <span>{msg.displayName}</span>
-                <div className="flex gap-1 items-center">
-                  {Object.keys(msg.badges).map((badgeName) => (
-                    <span 
-                      key={badgeName} 
-                      className="px-1.5 py-0.5 bg-purple-600 text-[9px] text-white font-black tracking-wider rounded border border-purple-400 uppercase shadow"
-                    >
-                      {badgeName}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <p className="text-sm text-zinc-100 px-1 font-medium leading-relaxed break-words">
-                {msg.text}
-              </p>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+    <div className="p-6 bg-slate-900 text-white min-h-screen font-sans">
+      <h1 className="text-2xl font-bold text-purple-500 mb-6">⚙️ Configurazione Estensione Chat</h1>
+      
+      <div className="mb-4 p-4 bg-slate-800 rounded-lg border border-slate-700">
+        <label className="flex items-center justify-between cursor-pointer">
+          <div>
+            <span className="font-semibold block">Abilita Chat Grafica Overlay</span>
+            <span className="text-sm text-slate-400">Mostra o nascondi l'intera chat grafica sullo schermo.</span>
+          </div>
+          <input 
+            type="checkbox" 
+            checked={config.chat_abilitata} 
+            onChange={(e) => setConfig({...config, chat_abilitata: e.target.checked})}
+            className="w-5 h-5 accent-purple-500"
+          />
+        </label>
       </div>
+
+      <div className="mb-4 p-4 bg-slate-800 rounded-lg border border-slate-700">
+        <label className="flex items-center justify-between cursor-pointer">
+          <div>
+            <span className="font-semibold block">Ignora i Messaggi dei Bot</span>
+            <span className="text-sm text-slate-400">Nasconde automaticamente i messaggi di Nightbot e altri bot.</span>
+          </div>
+          <input 
+            type="checkbox" 
+            checked={config.nascondi_bot} 
+            onChange={(e) => setConfig({...config, nascondi_bot: e.target.checked})}
+            className="w-5 h-5 accent-purple-500"
+          />
+        </label>
+      </div>
+
+      <div className="mb-6 p-4 bg-slate-800 rounded-lg border border-slate-700">
+        <label className="block mb-2 font-semibold">Durata Visibilità Messaggi (Secondi)</label>
+        <input 
+          type="number" 
+          value={config.durata_messaggio_secondi} 
+          onChange={(e) => setConfig({...config, durata_messaggio_secondi: parseInt(e.target.value) || 8})}
+          className="w-full bg-slate-700 p-2 rounded text-white border border-slate-600 focus:outline-none"
+          min="3" max="30"
+        />
+      </div>
+
+      <button 
+        onClick={handleSave} 
+        disabled={loading}
+        className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded transition-colors disabled:opacity-50"
+      >
+        {loading ? 'Salvataggio...' : 'Salva Modifiche'}
+      </button>
     </div>
   );
 }
