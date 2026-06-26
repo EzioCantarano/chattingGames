@@ -22,7 +22,10 @@ let ramChatBuffer = {
 };
 
 // 3. Endpoint di Health Check per UptimeRobot (Evita lo standby di Render)
+// Sostituisci la vecchia rotta /ping con questa:
 app.get('/ping', (req, res) => {
+    // Questo comando costringerà Render a scrivere sui log di sistema
+    console.log(`[PING] Richiesta di controllo ricevuta alle ore: ${new Date().toISOString()}`);
     res.status(200).send('Sto bene, sono sveglio!');
 });
 
