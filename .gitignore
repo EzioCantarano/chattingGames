@@ -1,0 +1,12 @@
+# Ignora le cartelle dei moduli di Node
+**/node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# Ignora i file di build del frontend
+frontend/dist/
+frontend/build/
+
+# IGNORA ASSOLUTAMENTE I FILE CON LE CHIAVI SEGRETE
+**/.env
+backend/.env
